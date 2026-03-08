@@ -12,8 +12,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('gmail_accounts', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
+        $table->id();
+        $table->foreignId('user_id')->nullable();
+        $table->string('google_id');
+        $table->text('access_token');
+        $table->text('refresh_token')->nullable();
+        $table->timestamp('token_expires_at')->nullable();
+        $table->timestamps();
         });
     }
 
