@@ -18,3 +18,5 @@ Route::post('/emails/sync', [EmailSyncController::class, 'sync']);
 
 Route::get('/emails/threads', [EmailController::class, 'threads']);
 Route::get('/emails/threads/{id}', [EmailController::class, 'thread']);
+
+Route::post('/emails/reply', [EmailController::class, 'reply']);

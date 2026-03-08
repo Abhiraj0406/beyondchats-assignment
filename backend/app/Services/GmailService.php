@@ -1,11 +1,10 @@
 <?php
-
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
-use App\Models\GmailAccount;
-use App\Models\EmailThread;
 use App\Models\Email;
+use App\Models\EmailThread;
+use App\Models\GmailAccount;
+use Illuminate\Support\Facades\Http;
 
 class GmailService
 {
@@ -37,7 +36,7 @@ class GmailService
             ['gmail_thread_id' => $threadId],
             [
                 'subject' => $threadData['snippet'] ?? '',
-                'snippet' => $threadData['snippet'] ?? ''
+                'snippet' => $threadData['snippet'] ?? '',
             ]
         );
 
@@ -51,17 +50,46 @@ class GmailService
         $headers = collect($message['payload']['headers']);
 
         $from = $headers->firstWhere('name', 'From')['value'] ?? '';
-        $to = $headers->firstWhere('name', 'To')['value'] ?? '';
+        $to   = $headers->firstWhere('name', 'To')['value'] ?? '';
 
         Email::updateOrCreate(
             ['gmail_message_id' => $message['id']],
             [
-                'thread_id' => $threadId,
+                'thread_id'  => $threadId,
                 'from_email' => $from,
-                'to_email' => $to,
-                'body_text' => $message['snippet'] ?? '',
-                'sent_at' => now()
+                'to_email'   => $to,
+                'body_text'  => $message['snippet'] ?? '',
+                'sent_at'    => now(),
             ]
         );
+    }
+
+    public function sendReply($threadId, $message)
+    {
+        $account     = \App\Models\GmailAccount::first();
+        $accessToken = $account->access_token;
+
+        $email = \App\Models\EmailThread::with('emails')->findOrFail($threadId);
+
+        $lastEmail = $email->emails->last();
+
+        $to      = $lastEmail->from_email;
+        $subject = "Re: " . $email->subject;
+
+        $rawMessage = base64_encode(
+            "To: $to\r\n" .
+            "Subject: $subject\r\n" .
+            "Content-Type: text/plain; charset=utf-8\r\n\r\n" .
+            $message
+        );
+
+        $body = [
+            "raw" => $rawMessage,
+        ];
+
+        $response = \Illuminate\Support\Facades\Http::withToken($accessToken)
+            ->post("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", $body);
+
+        return $response->json();
     }
 }
