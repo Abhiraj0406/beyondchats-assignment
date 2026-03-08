@@ -26,13 +26,13 @@ class EmailController extends Controller
 
     public function reply(Request $request, GmailService $gmailService)
     {
-        $threadId = $request->thread_id;
-        $message  = $request->message;
-
-        $gmailService->sendReply($threadId, $message);
+        $response = $gmailService->sendReply(
+            $request->thread_id,
+            $request->message
+        );
 
         return response()->json([
-            "message" => "Reply sent successfully",
+            "gmail_response" => $response,
         ]);
     }
 }

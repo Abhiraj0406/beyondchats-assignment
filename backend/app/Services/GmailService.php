@@ -69,22 +69,24 @@ class GmailService
         $account     = \App\Models\GmailAccount::first();
         $accessToken = $account->access_token;
 
-        $email = \App\Models\EmailThread::with('emails')->findOrFail($threadId);
-
-        $lastEmail = $email->emails->last();
+        $thread    = \App\Models\EmailThread::with('emails')->findOrFail($threadId);
+        $lastEmail = $thread->emails->last();
 
         $to      = $lastEmail->from_email;
-        $subject = "Re: " . $email->subject;
+        $subject = "Re: " . $thread->subject;
 
-        $rawMessage = base64_encode(
+        $emailContent =
             "To: $to\r\n" .
             "Subject: $subject\r\n" .
             "Content-Type: text/plain; charset=utf-8\r\n\r\n" .
-            $message
-        );
+            $message;
+
+        // Gmail requires URL-safe base64
+        $rawMessage = rtrim(strtr(base64_encode($emailContent), '+/', '-_'), '=');
 
         $body = [
-            "raw" => $rawMessage,
+            "raw"      => $rawMessage,
+            "threadId" => $thread->gmail_thread_id,
         ];
 
         $response = \Illuminate\Support\Facades\Http::withToken($accessToken)
