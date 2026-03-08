@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios";
+import { useNavigate } from "react-router-dom";
 
 export default function Chats() {
   const [threads, setThreads] = useState([]);
+    const navigate = useNavigate();     
 
   useEffect(() => {
     fetchThreads();
@@ -21,6 +23,7 @@ export default function Chats() {
         {threads.map((thread: any) => (
           <div
             key={thread.id}
+            onClick={() => navigate(`/thread/${thread.id}`)}
             className="border p-4 rounded hover:bg-gray-50 cursor-pointer"
           >
             <h2 className="font-semibold">
